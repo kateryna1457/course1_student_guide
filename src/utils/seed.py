@@ -1,19 +1,11 @@
-"""
-Генератор тестових даних для заповнення бази даних.
-
-Використовує Faker для створення реалістичних даних студентів.
-"""
-
 from datetime import date, timedelta
 from typing import List, Dict
 import random
 from faker import Faker
 
 from src.repositories import StudentRepository
-from src.utils import validate_student_id_number, ValidationError
 
 
-# Ініціалізувати Faker з українською локаллю
 fake_uk = Faker('uk_UA')
 fake_en = Faker('en_US')
 
@@ -43,9 +35,7 @@ class DataGenerator:
         Returns:
             Номер залікової книжки
         """
-        # Взяти префікс з назви групи
         prefix = group_name.split('-')[0]
-        # Згенерувати унікальний номер
         number = random.randint(1000, 9999)
         return f"{prefix}-{number}"
 
@@ -58,7 +48,6 @@ class DataGenerator:
         Returns:
             Номер телефону
         """
-        # Популярні коди операторів в Україні
         operator_codes = ['50', '63', '66', '67', '68', '91', '92', '93', '94', '95', '96', '97', '98', '99']
         operator = random.choice(operator_codes)
         number = ''.join([str(random.randint(0, 9)) for _ in range(7)])
@@ -72,11 +61,9 @@ class DataGenerator:
             Дата народження
         """
         today = date.today()
-        # Вік від 17 до 25 років
         years_ago = random.randint(17, 25)
         birth_year = today.year - years_ago
 
-        # Випадковий місяць та день
         birth_date = fake_uk.date_between(
             start_date=date(birth_year, 1, 1),
             end_date=date(birth_year, 12, 31)
@@ -94,10 +81,8 @@ class DataGenerator:
         Returns:
             Дата зарахування
         """
-        # Зарахування зазвичай 1 вересня
         enrollment_date = date(admission_year, 9, 1)
 
-        # Додати випадкову варіацію ±10 днів
         delta = timedelta(days=random.randint(-10, 10))
         return enrollment_date + delta
 
@@ -111,7 +96,6 @@ class DataGenerator:
         Returns:
             Словник з даними студента
         """
-        # Генерувати українські ПІБ
         gender = random.choice(['M', 'F'])
 
         if gender == 'M':
@@ -123,9 +107,7 @@ class DataGenerator:
             first_name = fake_uk.first_name_female()
             middle_name = fake_uk.middle_name_female()
 
-        # Згенерувати email (транслітерація + домен)
         email_prefix = f"{first_name.lower()}.{last_name.lower()}"
-        # Видалити кириличні символи для email (спрощений варіант)
         email_prefix_en = (
             email_prefix
             .replace('а', 'a').replace('б', 'b').replace('в', 'v')
@@ -145,7 +127,6 @@ class DataGenerator:
         email_domains = ['example.com', 'student.edu.ua', 'university.ua', 'mail.com']
         email = f"{email_prefix_en}@{random.choice(email_domains)}"
 
-        # Згенерувати номер залікової книжки
         max_attempts = 10
         student_id_number = None
 
@@ -155,21 +136,17 @@ class DataGenerator:
                 group['admission_year']
             )
 
-            # Перевірити чи вже існує такий номер
             if not self.repository.exists_student_id(candidate):
                 student_id_number = candidate
                 break
 
         if not student_id_number:
-            # Якщо не вдалося згенерувати унікальний номер, використати timestamp
             import time
             student_id_number = f"{group['name'].split('-')[0]}-{int(time.time()) % 10000}"
 
-        # Згенерувати дати
         birth_date = self.generate_birth_date()
         enrollment_date = self.generate_enrollment_date(birth_date, group['admission_year'])
 
-        # 80% студентів мають телефон, 20% - ні
         phone = self.generate_phone_number() if random.random() < 0.8 else None
 
         return {
@@ -197,7 +174,6 @@ class DataGenerator:
         Raises:
             ValueError: Якщо немає доступних груп
         """
-        # Отримати всі групи з БД
         groups = self.repository.get_all_groups()
 
         if not groups:
@@ -209,18 +185,14 @@ class DataGenerator:
         created_ids = []
 
         for i in range(count):
-            # Вибрати випадкову групу
             group = random.choice(groups)
 
-            # Згенерувати студента
             student_data = self.generate_student(group)
 
             try:
-                # Створити студента в БД
                 student_id = self.repository.create(student_data)
                 created_ids.append(student_id)
 
-                # Логування прогресу кожні 10 студентів
                 if (i + 1) % 10 == 0 or (i + 1) == count:
                     print(f"✓ Створено {i + 1}/{count} студентів")
 
@@ -242,7 +214,6 @@ class DataGenerator:
         total_specialties = len(self.repository.get_all_specialties())
         total_courses = len(self.repository.get_all_courses())
 
-        # Кількість студентів по курсах
         students_by_course = []
         for course in self.repository.get_all_courses():
             count = self.repository.count_by_course(course['id'])

@@ -1,8 +1,3 @@
--- ==========================================
--- Table: s_university.t_groups
--- Description: Student groups
--- ==========================================
-
 CREATE TABLE IF NOT EXISTS s_university.t_groups (
     id SERIAL,
     name VARCHAR(20) NOT NULL UNIQUE,
@@ -17,12 +12,10 @@ CREATE TABLE IF NOT EXISTS s_university.t_groups (
     CONSTRAINT chk_groups_admission_year CHECK (admission_year BETWEEN 1900 AND 2100)
 );
 
--- Create indexes for better search performance
 CREATE INDEX IF NOT EXISTS idx_groups_name ON s_university.t_groups(name);
 CREATE INDEX IF NOT EXISTS idx_groups_specialty_id ON s_university.t_groups(specialty_id);
 CREATE INDEX IF NOT EXISTS idx_groups_course_id ON s_university.t_groups(course_id);
 
--- Success message
 DO $$
 BEGIN
     RAISE NOTICE 'Table [s_university.t_groups] created successfully';

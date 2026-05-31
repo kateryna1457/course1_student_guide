@@ -1,8 +1,3 @@
--- ==========================================
--- Student Directory Database Initialization
--- Single consolidated SQL file for automatic initialization
--- ==========================================
-
 \echo 'Step 1: Creating schema...'
 \ir schemas/ddl/s_university.sql
 

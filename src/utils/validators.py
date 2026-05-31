@@ -1,9 +1,3 @@
-"""
-Валідатори для перевірки коректності даних.
-
-Цей модуль містить функції для валідації різних типів даних студентів.
-"""
-
 import re
 from datetime import date, datetime
 from typing import Optional
@@ -61,7 +55,6 @@ def validate_student_id_number(student_id: str) -> bool:
     if len(student_id) > MAX_STUDENT_ID_LENGTH:
         raise ValidationError(f"Student ID number must not exceed {MAX_STUDENT_ID_LENGTH} characters")
 
-    # Patterns: XX-NNNN, XXNNNN, XXX-NNNN
     pattern = r'^[A-Z]{2,4}-?\d{1,6}$'
 
     if not re.match(pattern, student_id, re.IGNORECASE):
@@ -99,7 +92,6 @@ def validate_group_name(group_name: str) -> bool:
     if len(group_name) > MAX_GROUP_NAME_LENGTH:
         raise ValidationError(f"Group name must not exceed {MAX_GROUP_NAME_LENGTH} characters")
 
-    # Pattern: XX-NN (2-4 letters, dash, 1-2 digits)
     pattern = r'^[A-Z]{2,4}-\d{1,2}$'
 
     if not re.match(pattern, group_name, re.IGNORECASE):
@@ -157,7 +149,6 @@ def validate_email(email: str) -> bool:
     if len(email) > MAX_EMAIL_LENGTH:
         raise ValidationError(f"Email is too long (max {MAX_EMAIL_LENGTH} characters)")
 
-    # RFC 5322 compliant email pattern (simplified)
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
 
     if not re.match(pattern, email):
@@ -188,10 +179,8 @@ def validate_phone(phone: str) -> bool:
     if not phone or not isinstance(phone, str):
         raise ValidationError("Phone number is required and must be a string")
 
-    # Remove all spaces, dashes, parentheses
     cleaned_phone = re.sub(r'[\s\-\(\)]', '', phone)
 
-    # Check Ukrainian formats
     patterns = [
         r'^\+380\d{9}$',  # +380XXXXXXXXX
         r'^380\d{9}$',    # 380XXXXXXXXX
@@ -232,11 +221,9 @@ def validate_birth_date(birth_date: date, min_age: int = MIN_STUDENT_AGE, max_ag
 
     today = date.today()
 
-    # Check if date is not in the future
     if birth_date > today:
         raise ValidationError("Birth date cannot be in the future")
 
-    # Calculate age
     age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
 
     if age < min_age:
@@ -298,7 +285,6 @@ def validate_specialty_code(code: str) -> bool:
     if len(code) > MAX_SPECIALTY_CODE_LENGTH:
         raise ValidationError(f"Specialty code must not exceed {MAX_SPECIALTY_CODE_LENGTH} characters")
 
-    # Pattern: NNN or NNN-XX (3 digits optionally followed by dash and letters)
     pattern = r'^\d{3}(-[A-Z]{1,4})?$'
 
     if not re.match(pattern, code, re.IGNORECASE):
@@ -369,7 +355,6 @@ def validate_string_length(
     return True
 
 
-# Convenience function for validating all student data at once
 def validate_student_data(
     last_name: str,
     first_name: str,
@@ -397,14 +382,12 @@ def validate_student_data(
     Raises:
         ValidationError: Якщо будь-які дані неправильні
     """
-    # Validate required fields
     validate_string_length(last_name, "Last name", MIN_NAME_LENGTH, MAX_NAME_LENGTH)
     validate_string_length(first_name, "First name", MIN_NAME_LENGTH, MAX_NAME_LENGTH)
     validate_student_id_number(student_id_number)
     validate_email(email)
     validate_birth_date(birth_date)
 
-    # Validate optional fields
     if patronymic:
         validate_string_length(patronymic, "Patronymic", MIN_NAME_LENGTH, MAX_NAME_LENGTH)
 

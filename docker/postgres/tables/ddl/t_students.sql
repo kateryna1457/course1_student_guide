@@ -1,8 +1,3 @@
--- ==========================================
--- Table: s_university.t_students
--- Description: Student records
--- ==========================================
-
 CREATE TABLE IF NOT EXISTS s_university.t_students (
     id SERIAL,
     last_name VARCHAR(100) NOT NULL,
@@ -25,13 +20,11 @@ CREATE TABLE IF NOT EXISTS s_university.t_students (
     )
 );
 
--- Create indexes for better search performance
 CREATE INDEX IF NOT EXISTS idx_students_last_name ON s_university.t_students(last_name);
 CREATE INDEX IF NOT EXISTS idx_students_email ON s_university.t_students(email);
 CREATE INDEX IF NOT EXISTS idx_students_student_id_number ON s_university.t_students(student_id_number);
 CREATE INDEX IF NOT EXISTS idx_students_group_id ON s_university.t_students(group_id);
 
--- Success message
 DO $$
 BEGIN
     RAISE NOTICE 'Table [s_university.t_students] created successfully';

@@ -1,9 +1,3 @@
-"""
-API роутер для роботи зі студентами.
-
-Endpoints для CRUD операцій зі студентами.
-"""
-
 from typing import List
 from fastapi import APIRouter, Query, status, Request
 from fastapi.responses import FileResponse
@@ -29,13 +23,10 @@ from src.constants import (
     RATE_LIMIT_PERIOD_CREATE
 )
 
-# Create rate limiter
 limiter = Limiter(key_func=get_remote_address)
 
-# Створити router
 router = APIRouter(prefix="/students", tags=["students"])
 
-# Ініціалізувати сервіс
 service = StudentService()
 
 
@@ -62,13 +53,9 @@ async def create_student(request: Request, student_data: StudentCreate):
         409: Номер залікової книжки вже існує
         500: Помилка бази даних
     """
-    # Convert Pydantic model to dict
     data = student_data.model_dump()
-
-    # Create student
     student_id = service.create_student(data)
 
-    # Get created student with full info
     student = service.get_student(student_id)
 
     return student
@@ -211,23 +198,19 @@ async def update_student(request: Request, student_id_number: str, student_data:
         422: Невалідні дані
         409: Конфлікт (дублікат номера залікової)
     """
-    # Convert to dict and filter out unset values (only include fields that were provided)
     data = student_data.model_dump(exclude_unset=True)
 
     if not data:
-        # No fields to update - just return current student
         student = service.get_student_by_id_number(student_id_number)
         if not student:
             raise StudentNotFoundError(student_id_number)
         return student
 
-    # Update
     success = service.update_student_by_id_number(student_id_number, data)
 
     if not success:
         raise StudentNotFoundError(student_id_number)
 
-    # Get updated student
     student = service.get_student_by_id_number(student_id_number)
 
     return student
@@ -293,15 +276,12 @@ async def export_json(
     if course_number:
         search_params['course_number'] = course_number
 
-    # Create temp file
     temp_fd, temp_path = tempfile.mkstemp(suffix='.json')
     os.close(temp_fd)
 
     try:
-        # Export with filters
         count = service.export_to_json(temp_path, search_params=search_params if search_params else None)
 
-        # Generate filename with timestamp
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f'students_{timestamp}.json'
 
@@ -315,7 +295,6 @@ async def export_json(
             }
         )
     except Exception as e:
-        # Clean up temp file on error
         if os.path.exists(temp_path):
             os.remove(temp_path)
         raise e
@@ -347,7 +326,6 @@ async def export_csv(
     Returns:
         FileResponse: CSV файл для завантаження
     """
-    # Build search parameters
     search_params = {}
     if query:
         search_params['query'] = query
@@ -358,15 +336,12 @@ async def export_csv(
     if course_number:
         search_params['course_number'] = course_number
 
-    # Create temp file
     temp_fd, temp_path = tempfile.mkstemp(suffix='.csv')
     os.close(temp_fd)
 
     try:
-        # Export with filters
         count = service.export_to_csv(temp_path, search_params=search_params if search_params else None)
 
-        # Generate filename with timestamp
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f'students_{timestamp}.csv'
 
@@ -380,7 +355,6 @@ async def export_csv(
             }
         )
     except Exception as e:
-        # Clean up temp file on error
         if os.path.exists(temp_path):
             os.remove(temp_path)
         raise e

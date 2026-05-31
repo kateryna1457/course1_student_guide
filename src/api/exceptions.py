@@ -1,9 +1,3 @@
-"""
-Обробка помилок API.
-
-Кастомні винятки та exception handlers для FastAPI.
-"""
-
 import logging
 from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse

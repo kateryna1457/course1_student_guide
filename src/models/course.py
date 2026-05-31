@@ -1,9 +1,3 @@
-"""
-OOP модель для курсу навчання.
-
-Цей модуль містить клас Course, що представляє курс навчання (1-6).
-"""
-
 from typing import Optional
 from dataclasses import dataclass
 

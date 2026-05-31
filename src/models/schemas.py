@@ -1,9 +1,3 @@
-"""
-Pydantic схеми для API валідації.
-
-Цей модуль містить схеми для валідації вхідних та вихідних даних API.
-"""
-
 from typing import Optional
 from datetime import date
 from pydantic import BaseModel, Field, EmailStr, field_validator

@@ -1,9 +1,3 @@
-"""
-CLI інтерфейс для роботи з довідником студентів.
-
-Використовує Typer для CLI та Rich для красивого виводу.
-"""
-
 import typer
 from typing import Optional
 from datetime import date
@@ -16,17 +10,13 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from src.services import StudentService
 from src.utils import ValidationError
 
-# Створити CLI додаток
 app = typer.Typer(
     name="students",
     help="Довідник студентів курсу - CLI інтерфейс",
     add_completion=False
 )
 
-# Rich console
 console = Console()
-
-# Ініціалізувати сервіс
 service = StudentService()
 
 
@@ -40,18 +30,15 @@ def add():
     console.print("\n[bold cyan]Додати нового студента[/bold cyan]\n")
 
     try:
-        # Get groups for selection
         groups = service.get_groups()
         if not groups:
             console.print("[red]✗ Немає доступних груп! Запустіть seed команду спочатку.[/red]")
             raise typer.Exit(1)
 
-        # Show groups
         console.print("[yellow]Доступні групи:[/yellow]")
-        for group in groups[:10]:  # Show first 10
+        for group in groups[:10]:
             console.print(f"  {group['id']}: {group['name']}")
 
-        # Collect data
         last_name = Prompt.ask("Прізвище")
         first_name = Prompt.ask("Ім'я")
         patronymic = Prompt.ask("По батькові", default="")
@@ -66,12 +53,9 @@ def add():
         birth_date_str = Prompt.ask("Дата народження (YYYY-MM-DD, наприклад 2000-01-15)")
         birth_date = date.fromisoformat(birth_date_str)
 
-        # Confirm
         if not Confirm.ask("\nСтворити студента з цими даними?"):
             console.print("[yellow]Скасовано[/yellow]")
             return
-
-        # Create student
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -92,9 +76,8 @@ def add():
 
             student_id = service.create_student(student_data)
 
-        console.print(f"\n[green]✓ Студента створено! ID: {student_id}[/green]")
+        console.print(f"\n[green] Студента створено! ID: {student_id}[/green]")
 
-        # Show created student
         student = service.get_student(student_id)
         _show_student_details(student)
 
@@ -126,7 +109,6 @@ def list(
             console.print("[yellow]Студентів не знайдено[/yellow]")
             return
 
-        # Create table
         table = Table(title=f"Список студентів ({offset + 1}-{offset + len(students)} з {total})")
 
         table.add_column("ID", style="cyan", width=6)
@@ -151,7 +133,7 @@ def list(
         console.print(f"\n[dim]Всього: {total} студентів[/dim]")
 
     except Exception as e:
-        console.print(f"[red]✗ Помилка: {e}[/red]")
+        console.print(f"[red] Помилка: {e}[/red]")
         raise typer.Exit(1)
 
 
@@ -170,13 +152,13 @@ def show(
         student = service.get_student_by_id_number(student_id_number)
 
         if not student:
-            console.print(f"[red]✗ Студента з номером {student_id_number} не знайдено[/red]")
+            console.print(f"[red] Студента з номером {student_id_number} не знайдено[/red]")
             raise typer.Exit(1)
 
         _show_student_details(student)
 
     except Exception as e:
-        console.print(f"[red]✗ Помилка: {e}[/red]")
+        console.print(f"[red] Помилка: {e}[/red]")
         raise typer.Exit(1)
 
 
@@ -202,7 +184,6 @@ def search(
         python -m src.cli search --specialty "122" --course 1
     """
     try:
-        # Build search parameters
         search_params = {
             'offset': offset,
             'limit': min(limit, 100)  # Max 100
@@ -217,7 +198,6 @@ def search(
         if course:
             search_params['course_number'] = course
 
-        # Show search criteria
         if query or group or specialty or course:
             console.print("[cyan]Критерії пошуку:[/cyan]")
             if query:
@@ -236,7 +216,6 @@ def search(
             console.print("[yellow]Нічого не знайдено[/yellow]")
             return
 
-        # Create table
         title_parts = []
         if query:
             title_parts.append(f"'{query}'")
@@ -287,7 +266,6 @@ def update(
         python -m src.cli update SE-2024
     """
     try:
-        # Check if student exists
         student = service.get_student_by_id_number(student_id_number)
         if not student:
             console.print(f"[red]✗ Студента з номером {student_id_number} не знайдено[/red]")
@@ -298,7 +276,6 @@ def update(
 
         console.print("\n[yellow]Введіть нові значення (Enter щоб пропустити):[/yellow]\n")
 
-        # Collect updates
         updates = {}
 
         email = Prompt.ask("Email", default=student.email)
@@ -313,12 +290,10 @@ def update(
             console.print("[yellow]Нічого не змінено[/yellow]")
             return
 
-        # Confirm
         if not Confirm.ask("\nОновити студента?"):
             console.print("[yellow]Скасовано[/yellow]")
             return
 
-        # Update
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -329,7 +304,6 @@ def update(
 
         console.print("\n[green]✓ Студента оновлено![/green]")
 
-        # Show updated student
         student = service.get_student_by_id_number(student_id_number)
         _show_student_details(student)
 
@@ -350,10 +324,9 @@ def delete(
         python -m src.cli delete SE-2024
     """
     try:
-        # Check if student exists
         student = service.get_student_by_id_number(student_id_number)
         if not student:
-            console.print(f"[red]✗ Студента з номером {student_id_number} не знайдено[/red]")
+            console.print(f"[red] Студента з номером {student_id_number} не знайдено[/red]")
             raise typer.Exit(1)
 
         console.print(f"\n[bold red]Видалити студента {student_id_number}?[/bold red]\n")
@@ -363,7 +336,6 @@ def delete(
             console.print("[yellow]Скасовано[/yellow]")
             return
 
-        # Delete
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -372,10 +344,10 @@ def delete(
             progress.add_task("Видалення...", total=None)
             service.delete_student_by_id_number(student_id_number)
 
-        console.print(f"\n[green]✓ Студента {student.get_full_name()} видалено[/green]")
+        console.print(f"\n[green] Студента {student.get_full_name()} видалено[/green]")
 
     except Exception as e:
-        console.print(f"[red]✗ Помилка: {e}[/red]")
+        console.print(f"[red] Помилка: {e}[/red]")
         raise typer.Exit(1)
 
 
@@ -404,18 +376,15 @@ def export(
     from pathlib import Path
 
     try:
-        # Validate format
         if format.lower() not in ["json", "csv"]:
-            console.print(f"[red]✗ Непідтримуваний формат: {format}[/red]")
+            console.print(f"[red] Непідтримуваний формат: {format}[/red]")
             console.print("[yellow]Використовуйте: json або csv[/yellow]")
             raise typer.Exit(1)
 
-        # Validate course number
         if course is not None and (course < 1 or course > 6):
             console.print(f"[red]✗ Номер курсу має бути від 1 до 6[/red]")
             raise typer.Exit(1)
 
-        # Build search parameters
         search_params = {}
         if query:
             search_params['query'] = query
@@ -426,7 +395,6 @@ def export(
         if course:
             search_params['course_number'] = course
 
-        # Show filters if any
         if search_params:
             console.print("[cyan]Фільтри:[/cyan]")
             if query:
@@ -439,11 +407,9 @@ def export(
                 console.print(f"  • Курс: {course}")
             console.print()
 
-        # Create demo/exports directory
         export_dir = Path("demo/exports")
         export_dir.mkdir(parents=True, exist_ok=True)
 
-        # Generate filename with timestamp
         timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
         filename = f"students_{timestamp}.{format.lower()}"
         file_path = export_dir / filename
@@ -459,20 +425,19 @@ def export(
 
             if format.lower() == "json":
                 count = service.export_to_json(str(file_path), search_params=search_params if search_params else None)
-            else:  # csv
+            else: 
                 count = service.export_to_csv(str(file_path), search_params=search_params if search_params else None)
 
-        # Get file size
         file_size = os.path.getsize(file_path)
         size_kb = file_size / 1024
 
-        console.print(f"\n[green]✓ Експорт завершено![/green]")
+        console.print(f"\n[green] Експорт завершено![/green]")
         console.print(f"[dim]Файл:[/dim] {file_path}")
         console.print(f"[dim]Експортовано:[/dim] {count} студентів")
         console.print(f"[dim]Розмір:[/dim] {size_kb:.1f} KB")
 
     except Exception as e:
-        console.print(f"[red]✗ Помилка: {e}[/red]")
+        console.print(f"[red] Помилка: {e}[/red]")
         raise typer.Exit(1)
 
 
@@ -486,7 +451,6 @@ def groups():
             console.print("[yellow]Груп не знайдено[/yellow]")
             return
 
-        # Create table
         table = Table(title="Список груп")
 
         table.add_column("ID", style="cyan", width=6)
@@ -505,7 +469,7 @@ def groups():
         console.print(f"\n[dim]Всього: {len(groups_list)} груп[/dim]")
 
     except Exception as e:
-        console.print(f"[red]✗ Помилка: {e}[/red]")
+        console.print(f"[red] Помилка: {e}[/red]")
         raise typer.Exit(1)
 
 
@@ -519,7 +483,6 @@ def specialties():
             console.print("[yellow]Спеціальностей не знайдено[/yellow]")
             return
 
-        # Create table
         table = Table(title="Список спеціальностей")
 
         table.add_column("ID", style="cyan", width=6)
@@ -538,7 +501,7 @@ def specialties():
         console.print(f"\n[dim]Всього: {len(specialties_list)} спеціальностей[/dim]")
 
     except Exception as e:
-        console.print(f"[red]✗ Помилка: {e}[/red]")
+        console.print(f"[red] Помилка: {e}[/red]")
         raise typer.Exit(1)
 
 
@@ -548,7 +511,6 @@ def stats():
     try:
         statistics = service.get_statistics()
 
-        # Create panel with stats
         stats_text = f"""
 [cyan]Загальна статистика:[/cyan]
 
@@ -562,10 +524,10 @@ def stats():
             for course_stat in statistics['students_by_course']:
                 stats_text += f"  [yellow]Курс {course_stat['course_number']}:[/yellow] {course_stat['count']} студентів\n"
 
-        console.print(Panel(stats_text, title="📊 Статистика", border_style="blue"))
+        console.print(Panel(stats_text, title=" Статистика", border_style="blue"))
 
     except Exception as e:
-        console.print(f"[red]✗ Помилка: {e}[/red]")
+        console.print(f"[red] Помилка: {e}[/red]")
         raise typer.Exit(1)
 
 
@@ -579,12 +541,10 @@ def seed(count: int = typer.Option(20, help="Кількість студенті
     try:
         console.print(f"\n[bold cyan]Генерація {count} студентів...[/bold cyan]\n")
 
-        # Підтвердження
         if not Confirm.ask(f"Створити {count} випадкових студентів?"):
             console.print("[yellow]Скасовано[/yellow]")
             return
 
-        # Імпортувати seed функцію
         from src.utils.seed import seed_database
 
         with Progress(
@@ -598,17 +558,16 @@ def seed(count: int = typer.Option(20, help="Кількість студенті
 
             progress.update(task, completed=True)
 
-        console.print(f"\n[green]✓ Створено {created_count} студентів![/green]")
+        console.print(f"\n[green] Створено {created_count} студентів![/green]")
 
-        # Показати статистику
         statistics = service.get_statistics()
         console.print(f"\n[cyan]Всього в БД:[/cyan] {statistics['total_students']} студентів")
 
     except ValueError as e:
-        console.print(f"\n[red]✗ Помилка: {e}[/red]")
+        console.print(f"\n[red] Помилка: {e}[/red]")
         raise typer.Exit(1)
     except Exception as e:
-        console.print(f"\n[red]✗ Несподівана помилка: {e}[/red]")
+        console.print(f"\n[red] Несподівана помилка: {e}[/red]")
         raise typer.Exit(1)
 
 

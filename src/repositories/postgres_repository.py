@@ -1,9 +1,3 @@
-"""
-PostgreSQL репозиторій для студентів.
-
-Реалізація Repository Pattern для роботи з таблицею t_students.
-"""
-
 import logging
 from typing import Optional, List, Dict, Any
 from psycopg2 import Error as PostgresError
@@ -120,7 +114,7 @@ class StudentRepository(BaseRepository):
         Returns:
             List[Dict[str, Any]]: Список студентів з повною інформацією
         """
-        limit = min(limit, 100)  # Обмеження для безпеки
+        limit = min(limit, 100)
 
         query = f"""
             SELECT * FROM {self.view_name}
@@ -153,7 +147,6 @@ class StudentRepository(BaseRepository):
         conditions = []
         values = []
 
-        # General search query (last_name, email, group_name)
         if params.get('query'):
             search_pattern = f"%{params['query']}%"
             conditions.append("""(
@@ -163,27 +156,22 @@ class StudentRepository(BaseRepository):
             )""")
             values.extend([search_pattern, search_pattern, search_pattern])
 
-        # Filter by group name
         if params.get('group_name'):
             conditions.append("group_name = %s")
             values.append(params['group_name'])
 
-        # Filter by specialty code
         if params.get('specialty_code'):
             conditions.append("specialty_code = %s")
             values.append(params['specialty_code'])
 
-        # Filter by course number
         if params.get('course_number'):
             conditions.append("course_number = %s")
             values.append(params['course_number'])
 
-        # Build WHERE clause
         where_clause = ""
         if conditions:
             where_clause = "WHERE " + " AND ".join(conditions)
 
-        # Pagination
         offset = params.get('offset', 0)
         limit = min(params.get('limit', 50), 100)
 
@@ -213,7 +201,6 @@ class StudentRepository(BaseRepository):
         Returns:
             bool: True якщо оновлення успішне
         """
-        # Build SET clause dynamically
         set_parts = []
         values = []
 
@@ -228,7 +215,7 @@ class StudentRepository(BaseRepository):
                 values.append(data[field])
 
         if not set_parts:
-            return False  # Nothing to update
+            return False
 
         set_clause = ", ".join(set_parts)
         values.append(student_id)

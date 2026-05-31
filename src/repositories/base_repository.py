@@ -1,9 +1,3 @@
-"""
-Базовий репозиторій (Repository Pattern).
-
-Абстрактний клас що визначає інтерфейс для роботи з даними.
-"""
-
 from abc import ABC, abstractmethod
 from typing import Optional, List, Dict, Any
 

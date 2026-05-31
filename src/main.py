@@ -1,9 +1,3 @@
-"""
-Точка входу для запуску API сервера.
-
-Запуск: python -m src.main
-"""
-
 import uvicorn
 from src.config import get_settings
 

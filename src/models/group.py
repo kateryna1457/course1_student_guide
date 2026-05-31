@@ -1,9 +1,3 @@
-"""
-OOP модель для групи студентів.
-
-Цей модуль містить клас Group, що представляє студентську групу.
-"""
-
 from typing import Optional
 from dataclasses import dataclass
 

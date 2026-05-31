@@ -1,19 +1,10 @@
-"""
-API роутер для довідкових даних (read-only).
-
-Endpoints для отримання груп, спеціальностей, курсів.
-"""
-
 from typing import List
 from fastapi import APIRouter
 
 from src.models import GroupResponse, SpecialtyResponse, CourseResponse
 from src.services import StudentService
 
-# Створити router
 router = APIRouter(prefix="/reference", tags=["reference"])
-
-# Ініціалізувати сервіс
 service = StudentService()
 
 

@@ -1,8 +1,3 @@
--- ==========================================
--- Initial Data: s_university.t_courses
--- Description: Insert course years (1-6)
--- ==========================================
-
 INSERT INTO s_university.t_courses (course_number, name) VALUES
     (1, 'First Year'),
     (2, 'Second Year'),
@@ -12,7 +7,6 @@ INSERT INTO s_university.t_courses (course_number, name) VALUES
     (6, 'Sixth Year')
 ON CONFLICT (course_number) DO NOTHING;
 
--- Success message
 DO $$
 DECLARE
     course_count INTEGER;

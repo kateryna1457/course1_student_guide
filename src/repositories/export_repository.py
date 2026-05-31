@@ -1,9 +1,3 @@
-"""
-Репозиторій для експорту даних з PostgreSQL у файли.
-
-Підтримує експорт у JSON та CSV формати.
-"""
-
 import logging
 import json
 import csv
@@ -52,23 +46,19 @@ class ExportRepository:
             mode: Режим запису ('w' або 'wb')
             encoding: Кодування файлу (за замовчуванням 'utf-8')
         """
-        # Create directory if not exists
         target_dir = os.path.dirname(target_path)
         if target_dir:
             os.makedirs(target_dir, exist_ok=True)
 
-        # Write to temporary file first
         temp_fd, temp_path = tempfile.mkstemp(dir=target_dir, suffix='.tmp')
 
         try:
             with os.fdopen(temp_fd, mode, encoding=encoding if mode == 'w' else None) as f:
                 f.write(content)
 
-            # Atomic rename
             os.replace(temp_path, target_path)
 
         except Exception as e:
-            # Clean up temp file on error
             if os.path.exists(temp_path):
                 os.remove(temp_path)
             raise e
@@ -103,7 +93,6 @@ class ExportRepository:
         Raises:
             Exception: При помилках запису
         """
-        # Convert StudentFullInfo objects to dicts
         students_data = [s.to_dict() for s in students]
         return self._write_json(file_path, students_data)
 
@@ -118,7 +107,6 @@ class ExportRepository:
         Returns:
             int: Кількість експортованих записів
         """
-        # Convert date objects to ISO format strings
         for student in students:
             if student.get('birth_date'):
                 if not isinstance(student['birth_date'], str):
@@ -127,7 +115,6 @@ class ExportRepository:
                 if not isinstance(student['enrollment_date'], str):
                     student['enrollment_date'] = student['enrollment_date'].isoformat()
 
-        # Create JSON with pretty formatting
         json_content = json.dumps(
             {
                 "metadata": {
@@ -138,7 +125,7 @@ class ExportRepository:
                 "students": students
             },
             indent=2,
-            ensure_ascii=False,  # Підтримка кирилиці
+            ensure_ascii=False,
             default=str
         )
 
@@ -177,7 +164,6 @@ class ExportRepository:
         Raises:
             Exception: При помилках запису
         """
-        # Convert StudentFullInfo objects to dicts
         students_data = [s.to_dict() for s in students]
         return self._write_csv(file_path, students_data)
 
@@ -194,31 +180,23 @@ class ExportRepository:
         """
         csv_content = self._create_csv_content(students)
 
-        # Write CSV with UTF-8 BOM for Excel compatibility
-        # Create directory if not exists
         target_dir = os.path.dirname(file_path)
         if target_dir:
             os.makedirs(target_dir, exist_ok=True)
 
-        # Write to temporary file first with explicit UTF-8 BOM
         temp_fd, temp_path = tempfile.mkstemp(dir=target_dir, suffix='.tmp')
 
         try:
-            # Write as binary with UTF-8 BOM (0xEF, 0xBB, 0xBF)
             with os.fdopen(temp_fd, 'wb') as f:
-                # Write UTF-8 BOM
                 f.write(b'\xef\xbb\xbf')
-                # Write CSV content as UTF-8 bytes
                 f.write(csv_content.encode('utf-8'))
 
-            # Atomic rename
             os.replace(temp_path, file_path)
 
             logger.info(f"Exported {len(students)} students to {file_path}")
             return len(students)
 
         except Exception as e:
-            # Clean up temp file on error
             if os.path.exists(temp_path):
                 os.remove(temp_path)
             raise e
@@ -233,7 +211,6 @@ class ExportRepository:
         Returns:
             str: CSV контент з UTF-8 BOM
         """
-        # Define CSV columns
         fieldnames = [
             'id',
             'last_name',
@@ -253,7 +230,6 @@ class ExportRepository:
             'specialty_description'
         ]
 
-        # Create CSV in memory with UTF-8 BOM for Excel compatibility
         import io
         output = io.StringIO()
 
@@ -261,14 +237,13 @@ class ExportRepository:
             output,
             fieldnames=fieldnames,
             extrasaction='ignore',
-            delimiter=';',  # Use semicolon for Excel compatibility with Cyrillic
+            delimiter=';',  
             quoting=csv.QUOTE_MINIMAL
         )
 
         writer.writeheader()
 
         for student in students:
-            # Convert dates to ISO format (only if they're not already strings)
             row = dict(student)
             if row.get('birth_date'):
                 if not isinstance(row['birth_date'], str):
@@ -290,22 +265,18 @@ class ExportRepository:
         """
         stats = {}
 
-        # Count students
         query_students = f"SELECT COUNT(*) as count FROM {self.view_name};"
         result = self.db.execute_one(query_students)
         stats['total_students'] = result['count'] if result else 0
 
-        # Count groups
         query_groups = "SELECT COUNT(*) as count FROM t_groups;"
         result = self.db.execute_one(query_groups)
         stats['total_groups'] = result['count'] if result else 0
 
-        # Count specialties
         query_specialties = "SELECT COUNT(*) as count FROM t_specialties;"
         result = self.db.execute_one(query_specialties)
         stats['total_specialties'] = result['count'] if result else 0
 
-        # Count by course
         query_by_course = """
             SELECT course_number, COUNT(*) as count
             FROM v_student_full_info

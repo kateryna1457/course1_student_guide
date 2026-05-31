@@ -1,9 +1,3 @@
-"""
-OOP модель для студента.
-
-Цей модуль містить клас Student, що представляє студента.
-"""
-
 from typing import Optional
 from datetime import date
 from dataclasses import dataclass, field

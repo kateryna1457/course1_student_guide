@@ -1,9 +1,3 @@
-"""
-OOP модель для спеціальності.
-
-Цей модуль містить клас Specialty, що представляє академічну спеціальність.
-"""
-
 from typing import Optional
 from dataclasses import dataclass
 

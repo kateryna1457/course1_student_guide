@@ -1,10 +1,3 @@
-"""
-Конфігурація додатка.
-
-Цей модуль відповідає за завантаження конфігураційних параметрів
-та підключення до бази даних PostgreSQL.
-"""
-
 from pydantic_settings import BaseSettings
 from pydantic import Field, computed_field
 
@@ -12,7 +5,6 @@ from pydantic import Field, computed_field
 class Settings(BaseSettings):
     """Налаштування додатка."""
 
-    # Database connection parameters
     db_host: str = Field(
         default="localhost",
         description="PostgreSQL host"
@@ -43,7 +35,6 @@ class Settings(BaseSettings):
         description="Схема бази даних"
     )
 
-    # Application
     app_name: str = Field(
         default="Student Directory API",
         description="Назва додатка"
@@ -59,7 +50,6 @@ class Settings(BaseSettings):
         description="Режим налагодження"
     )
 
-    # API
     api_prefix: str = Field(
         default="/api",
         description="Префікс для API endpoints"
@@ -75,9 +65,8 @@ class Settings(BaseSettings):
         description="Port для API сервера"
     )
 
-    # CORS
     cors_origins: list[str] = Field(
-        default=["http://localhost:3000", "http://localhost:8000"],
+        default=["http://localhost:8000"],
         description="Дозволені CORS origins"
     )
 
@@ -99,11 +88,10 @@ class Settings(BaseSettings):
         "env_file": ".env",
         "env_file_encoding": "utf-8",
         "case_sensitive": False,
-        "extra": "ignore"  # Allow extra fields in .env (ignore them)
+        "extra": "ignore" 
     }
 
 
-# Глобальний екземпляр налаштувань
 settings = Settings()
 
 

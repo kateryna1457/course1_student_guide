@@ -1,11 +1,4 @@
-"""
-Database connection manager.
-
-Управління підключеннями до PostgreSQL через psycopg2.
-"""
-
 import logging
-import psycopg2
 from psycopg2 import pool, Error as PostgresError
 from psycopg2.extras import RealDictCursor
 from typing import Optional
@@ -35,7 +28,6 @@ class DatabaseConnection:
 
     def __init__(self):
         """Ініціалізація connection pool."""
-        # Don't initialize pool immediately - do it lazily on first use
         pass
 
     def _initialize_pool(self):
@@ -195,11 +187,9 @@ class DatabaseConnection:
             return False
 
 
-# Глобальний екземпляр (singleton)
 db = DatabaseConnection()
 
 
-# Convenience functions
 def get_db() -> DatabaseConnection:
     """
     Отримати екземпляр DatabaseConnection.

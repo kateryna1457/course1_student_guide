@@ -1,9 +1,3 @@
-"""
-Головний FastAPI додаток.
-
-REST API для довідника студентів.
-"""
-
 import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,7 +19,6 @@ from src.api.exceptions import (
 )
 from src.api.routes import students, reference
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -34,14 +27,9 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
-
-# Отримати налаштування
 settings = get_settings()
-
-# Створити rate limiter
 limiter = Limiter(key_func=get_remote_address)
 
-# Створити FastAPI додаток
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
@@ -49,13 +37,10 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
-    swagger_ui_parameters={"defaultModelsExpandDepth": -1}  # Hide schemas section by default
+    swagger_ui_parameters={"defaultModelsExpandDepth": -1}
 )
-
-# Add rate limiter to app state
 app.state.limiter = limiter
 
-# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -64,7 +49,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Exception handlers
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_exception_handler(ValidationError, validation_error_handler)
 app.add_exception_handler(ValueError, value_error_handler)
@@ -72,14 +56,9 @@ app.add_exception_handler(PostgresError, postgres_error_handler)
 app.add_exception_handler(RequestValidationError, request_validation_error_handler)
 app.add_exception_handler(Exception, general_exception_handler)
 
-# Include routers with API versioning (v1)
 API_V1_PREFIX = f"{settings.api_prefix}/v1"
 app.include_router(students.router, prefix=API_V1_PREFIX)
 app.include_router(reference.router, prefix=API_V1_PREFIX)
-
-# Keep backward compatibility - also mount on /api without version
-app.include_router(students.router, prefix=settings.api_prefix, tags=["students (legacy)"])
-app.include_router(reference.router, prefix=settings.api_prefix, tags=["reference (legacy)"])
 
 
 @app.get("/", tags=["root"])
@@ -99,10 +78,8 @@ async def root(request: Request):
         "redoc": "/redoc",
         "openapi": "/openapi.json",
         "endpoints": {
-            "students_v1": f"{API_V1_PREFIX}/students",
-            "reference_v1": f"{API_V1_PREFIX}/reference",
-            "students_legacy": f"{settings.api_prefix}/students",
-            "reference_legacy": f"{settings.api_prefix}/reference"
+            "students": f"{API_V1_PREFIX}/students",
+            "reference": f"{API_V1_PREFIX}/reference"
         },
         "rate_limit": f"{RATE_LIMIT_REQUESTS} requests per {RATE_LIMIT_PERIOD}"
     }
@@ -130,20 +107,18 @@ async def health_check(request: Request):
     }
 
 
-# Startup event
 @app.on_event("startup")
 async def startup_event():
     """Подія при запуску додатка."""
     logger.info("=" * 60)
-    logger.info(f"🚀 {settings.app_name} v{settings.app_version} (API v1)")
+    logger.info(f"{settings.app_name} v{settings.app_version} (API v1)")
     logger.info("=" * 60)
-    logger.info(f"📚 Docs: http://{settings.api_host}:{settings.api_port}/docs")
-    logger.info(f"🔍 ReDoc: http://{settings.api_host}:{settings.api_port}/redoc")
-    logger.info(f"🏥 Health: http://{settings.api_host}:{settings.api_port}/health")
-    logger.info(f"🛡️  Rate Limit: {RATE_LIMIT_REQUESTS} requests per {RATE_LIMIT_PERIOD}")
+    logger.info(f"Docs: http://{settings.api_host}:{settings.api_port}/docs")
+    logger.info(f"ReDoc: http://{settings.api_host}:{settings.api_port}/redoc")
+    logger.info(f"Health: http://{settings.api_host}:{settings.api_port}/health")
+    logger.info(f"Rate Limit: {RATE_LIMIT_REQUESTS} requests per {RATE_LIMIT_PERIOD}")
     logger.info("=" * 60)
 
-    # Test database connection
     from src.repositories import get_db
 
     db = get_db()
@@ -155,18 +130,16 @@ async def startup_event():
     logger.info("=" * 60)
 
 
-# Shutdown event
 @app.on_event("shutdown")
 async def shutdown_event():
     """Подія при зупинці додатка."""
     logger.info("=" * 60)
-    logger.info("🛑 Shutting down...")
+    logger.info("Shutting down...")
 
-    # Close database connection
     from src.repositories import get_db
 
     db = get_db()
     db.close()
 
-    logger.info("✓ Database connection closed")
+    logger.info("Database connection closed")
     logger.info("=" * 60)

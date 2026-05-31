@@ -1,14 +1,8 @@
-"""
-Сервіс для роботи зі студентами (Business Logic Layer).
-
-Цей модуль містить бізнес-логіку для управління студентами.
-"""
-
 from typing import Optional, List, Dict, Any
 from datetime import date
 from psycopg2 import Error as PostgresError
 
-from src.models import Student, StudentFullInfo
+from src.models import StudentFullInfo
 from src.repositories import StudentRepository, ExportRepository
 from src.utils import (
     validate_student_data,
@@ -56,13 +50,11 @@ class StudentService:
             ValueError: При дублюванні student_id_number
             PostgresError: При помилці БД
         """
-        # 1. Валідація обов'язкових полів
         required_fields = ['last_name', 'first_name', 'student_id_number', 'group_id', 'email', 'birth_date']
         for field in required_fields:
             if field not in data or data[field] is None:
                 raise ValidationError(f"Field '{field}' is required")
 
-        # 2. Валідація даних
         birth_date = data.get('birth_date')
         if isinstance(birth_date, str):
             birth_date = date.fromisoformat(birth_date)
@@ -77,13 +69,11 @@ class StudentService:
             phone=data.get('phone')
         )
 
-        # 3. Перевірка унікальності student_id_number
         if self.student_repo.exists_by_student_id_number(data['student_id_number']):
             raise ValueError(
                 f"Student with ID number '{data['student_id_number']}' already exists"
             )
 
-        # 4. Створення студента
         student_id = self.student_repo.create(data)
 
         if not student_id:
@@ -152,20 +142,18 @@ class StudentService:
         Returns:
             tuple: (список студентів, загальна кількість)
         """
-        # Validate pagination parameters
         if offset < 0:
             offset = 0
 
         if limit <= 0:
             limit = 50
 
-        limit = min(limit, 100)  # Max 100 per page
+        limit = min(limit, 100)
 
         # Get students
         data_list = self.student_repo.get_all(offset=offset, limit=limit)
         students = [StudentFullInfo.from_dict(data) for data in data_list]
 
-        # Get total count
         total = self.student_repo.count()
 
         return students, total
@@ -186,7 +174,6 @@ class StudentService:
         Returns:
             tuple: (список знайдених студентів, загальна кількість)
         """
-        # Validate and sanitize parameters
         params = {
             'offset': max(0, search_params.get('offset', 0)),
             'limit': min(search_params.get('limit', 50), 100)
@@ -206,15 +193,10 @@ class StudentService:
             if 1 <= course <= 6:
                 params['course_number'] = course
 
-        # Search
         data_list = self.student_repo.search(params)
         students = [StudentFullInfo.from_dict(data) for data in data_list]
 
-        # Count with same filters (without pagination)
-        count_params = {k: v for k, v in params.items() if k not in ['offset', 'limit']}
-        # For search count, we'll use the length of results as approximation
-        # or implement a separate count method in repository
-        total = len(students)  # Simplified
+        total = len(students)
 
         return students, total
 
@@ -233,11 +215,9 @@ class StudentService:
             ValueError: Якщо студент не існує або дані невалідні
             ValidationError: При невалідних даних
         """
-        # Check if student exists
         if not self.student_repo.exists(student_id):
             raise ValueError(f"Student with ID {student_id} does not exist")
 
-        # Validate fields if present
         if 'email' in data and data['email']:
             validate_email(data['email'])
 
@@ -250,7 +230,6 @@ class StudentService:
                 birth_date = date.fromisoformat(birth_date)
             validate_birth_date(birth_date)
 
-        # Check student_id_number uniqueness if being updated
         if 'student_id_number' in data and data['student_id_number']:
             if self.student_repo.exists_by_student_id_number(
                 data['student_id_number'],
@@ -260,7 +239,6 @@ class StudentService:
                     f"Student with ID number '{data['student_id_number']}' already exists"
                 )
 
-        # Update
         return self.student_repo.update(student_id, data)
 
     def update_student_by_id_number(self, student_id_number: str, data: Dict[str, Any]) -> bool:
@@ -278,12 +256,10 @@ class StudentService:
             ValueError: Якщо студент не існує або дані невалідні
             ValidationError: При невалідних даних
         """
-        # Get student by student_id_number to get the internal ID
         student = self.get_student_by_id_number(student_id_number)
         if not student:
             raise ValueError(f"Student with ID number '{student_id_number}' does not exist")
 
-        # Validate fields if present
         if 'email' in data and data['email']:
             validate_email(data['email'])
 
@@ -296,9 +272,7 @@ class StudentService:
                 birth_date = date.fromisoformat(birth_date)
             validate_birth_date(birth_date)
 
-        # Check student_id_number uniqueness if being updated
         if 'student_id_number' in data and data['student_id_number']:
-            # Check if new student_id_number already exists (excluding current student)
             if data['student_id_number'] != student_id_number:
                 if self.student_repo.exists_by_student_id_number(
                     data['student_id_number'],
@@ -308,7 +282,6 @@ class StudentService:
                         f"Student with ID number '{data['student_id_number']}' already exists"
                     )
 
-        # Update using internal ID
         return self.student_repo.update(student.id, data)
 
     def delete_student(self, student_id: int) -> bool:
@@ -324,7 +297,6 @@ class StudentService:
         Raises:
             ValueError: Якщо студент не існує
         """
-        # Check if student exists
         if not self.student_repo.exists(student_id):
             raise ValueError(f"Student with ID {student_id} does not exist")
 
@@ -343,7 +315,6 @@ class StudentService:
         Raises:
             ValueError: Якщо студент не існує
         """
-        # Get student to retrieve internal ID
         student = self.get_student_by_id_number(student_id_number)
         if not student:
             raise ValueError(f"Student with ID number '{student_id_number}' does not exist")
@@ -391,12 +362,10 @@ class StudentService:
         Raises:
             Exception: При помилці запису
         """
-        # If search params provided, get filtered students
         if search_params:
             students, _ = self.search_students(search_params)
             return self.export_repo.export_students_to_json(file_path, students)
         else:
-            # Export all
             return self.export_repo.export_to_json(file_path)
 
     def export_to_csv(self, file_path: str, search_params: Optional[Dict[str, Any]] = None) -> int:
@@ -413,12 +382,10 @@ class StudentService:
         Raises:
             Exception: При помилці запису
         """
-        # If search params provided, get filtered students
         if search_params:
             students, _ = self.search_students(search_params)
             return self.export_repo.export_students_to_csv(file_path, students)
         else:
-            # Export all
             return self.export_repo.export_to_csv(file_path)
 
     def get_statistics(self) -> Dict[str, Any]:
@@ -433,7 +400,6 @@ class StudentService:
         total_specialties = len(self.get_specialties())
         total_courses = len(self.get_courses())
 
-        # Кількість студентів по курсах
         students_by_course = []
         for course in self.get_courses():
             count = self.student_repo.count_by_course(course['id'])

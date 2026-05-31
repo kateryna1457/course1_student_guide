@@ -1,8 +1,3 @@
--- ==========================================
--- Initial Data: s_university.t_specialties
--- Description: Insert academic specialties
--- ==========================================
-
 INSERT INTO s_university.t_specialties (name, code, description) VALUES
     (
         'Computer Science',
